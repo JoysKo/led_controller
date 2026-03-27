@@ -5,18 +5,21 @@
 LED="/sys/class/leds/white/brightness"
 DB_PATH="/data/user_de/0/org.lineageos.lineagesettings/databases/lineagesettings.db"
 LOG="/data/local/tmp/led_charger.log"
+PID_FILE="/data/local/tmp/led_charger.pid"
 
-# Проверяем, не запущен ли уже
-if [ -f /data/local/tmp/led_charger.pid ]; then
-    pid=$(cat /data/local/tmp/led_charger.pid 2>/dev/null)
-    if kill -0 $pid 2>/dev/null; then
-        echo "LED charger already running" >> $LOG
+# Проверка на повторный запуск через PID-файл
+if [ -f "$PID_FILE" ]; then
+    old_pid=$(cat "$PID_FILE" 2>/dev/null)
+    if kill -0 "$old_pid" 2>/dev/null; then
         exit 0
     fi
 fi
-echo $$ > /data/local/tmp/led_charger.pid
+echo $$ > "$PID_FILE"
 
-echo none > $LED
+# Удаляем PID при выходе
+trap "rm -f $PID_FILE" EXIT
+
+echo none > $LED 2>/dev/null
 
 log() {
     echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" >> $LOG
@@ -50,9 +53,9 @@ get_battery_brightness() {
 blink() {
     local on=$1 off=$2 times=$3 brightness=$4
     for i in $(seq 1 $times); do
-        echo $brightness > $LED
+        echo $brightness > $LED 2>/dev/null
         sleep $on
-        echo 0 > $LED
+        echo 0 > $LED 2>/dev/null
         sleep $off
     done
 }
@@ -70,25 +73,25 @@ while true; do
         
         if [ "$status" = "Charging" ] && [ -n "$cap" ]; then
             if [ "$full_disable" = "1" ] && [ "$cap" -eq 100 ]; then
-                echo 0 > $LED
+                echo 0 > $LED 2>/dev/null
             else
                 max_brightness=$(get_battery_brightness)
                 brightness=$((max_brightness * (100 - cap) / 100))
-                min_brightness=$((max_brightness * 10 / 100))
+                min_brightness=$((max_brightness * 35 / 100))
                 [ "$brightness" -lt "$min_brightness" ] && brightness=$min_brightness
                 [ "$brightness" -gt "$max_brightness" ] && brightness=$max_brightness
                 
                 if [ "$pulse" = "1" ] && [ "$cap" -lt 15 ]; then
                     blink 0.5 0.5 2 $brightness
                 else
-                    echo $brightness > $LED
+                    echo $brightness > $LED 2>/dev/null
                 fi
             fi
         else
-            echo 0 > $LED
+            echo 0 > $LED 2>/dev/null
         fi
     else
-        echo 0 > $LED
+        echo 0 > $LED 2>/dev/null
     fi
     
     sleep 2

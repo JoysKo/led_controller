@@ -5,18 +5,21 @@
 LED="/sys/class/leds/white/brightness"
 DB_PATH="/data/user_de/0/org.lineageos.lineagesettings/databases/lineagesettings.db"
 LOG="/data/local/tmp/led_notify.log"
+PID_FILE="/data/local/tmp/led_notify.pid"
 
-# Проверяем, не запущен ли уже
-if [ -f /data/local/tmp/led_notify.pid ]; then
-    pid=$(cat /data/local/tmp/led_notify.pid 2>/dev/null)
-    if kill -0 $pid 2>/dev/null; then
-        echo "LED notify already running" >> $LOG
+# === Проверка на повторный запуск ===
+if [ -f "$PID_FILE" ]; then
+    old_pid=$(cat "$PID_FILE" 2>/dev/null)
+    if kill -0 "$old_pid" 2>/dev/null; then
         exit 0
     fi
 fi
-echo $$ > /data/local/tmp/led_notify.pid
+echo $$ > "$PID_FILE"
 
-echo none > $LED
+# === Очистка при выходе ===
+trap "rm -f $PID_FILE" EXIT
+
+echo none > $LED 2>/dev/null
 
 log() {
     echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" >> $LOG
@@ -50,9 +53,9 @@ get_notification_brightness() {
 blink() {
     local on=$1 off=$2 times=$3 brightness=$4
     for i in $(seq 1 $times); do
-        echo $brightness > $LED
+        echo $brightness > $LED 2>/dev/null
         sleep $on
-        echo 0 > $LED
+        echo 0 > $LED 2>/dev/null
         sleep $off
     done
 }
