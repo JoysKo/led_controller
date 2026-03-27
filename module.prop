@@ -1,0 +1,6 @@
+id=led_controller
+name=LED Controller
+version=v1.1
+versionCode=1
+author=JoysKo
+description=LED Control for Xiaomi Mi Max 3 with support for charging and notifications
