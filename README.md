@@ -18,7 +18,7 @@ LED Control module for Xiaomi Mi Max 3 with support for charging and notificatio
 
 ## Installation
 
-1. Download the latest `led_controller_vX.X.zip` from [Releases](https://github.com/YOUR_USERNAME/led_controller/releases)
+1. Download the latest `led_controller_vX.X.zip` from [Releases](https://github.com/JoysKo/led_controller/releases)
 2. Open Magisk/KernelSU app
 3. Go to Modules section
 4. Click "Install from storage" and select the downloaded zip
